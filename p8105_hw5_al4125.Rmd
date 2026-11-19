@@ -37,6 +37,7 @@ y = "Probability of shared birthday"
 )
 
 ```
+
 Sample() was used to draw a random birthday for each person in a group. Then n_distinct() was used to check if any birthdays were repeated. We got TRUE as the answer if at least two people shared a birthday, and FALSE if not. Then expand_grid() and map() were used to run the function 10,000 times for each group size between 2 and 50. Group_by() and summarize() were then used to find the probability of finding a shared birthday by finding the average across the 10,000 runs. 
 
 As seen in the plot, the probability of having a shared birthday increases as the group size increases. The probability is close to 0 for smaller groups and was approximately 0.98 for groups of 50 people.
@@ -78,5 +79,6 @@ y = "Outcome",
 color = "Arm")
 
 ```
+
 List.files() was used to make the data frame with all of the file names, and map() and read_csv() were used to get the data for each subject. Str_replace() and str_sub() were then used to get the subject ID and arm from the file names, and pivot_longer() was used to tidy each of the weekly observations, so each row had one subject per week. As seen in the spaghetti plot, individuals in the control arm had relatively constant outcomes between -2.5 and ~4 over the 8-week time period. In the experimental arm, individuals increased from 0 to 3 in the first week to 3 to ~7 at the end of the 8 weeks. Therefore, the experimental arm had higher outcomes on average compared to the control arm.
 
