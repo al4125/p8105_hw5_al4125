@@ -82,3 +82,69 @@ color = "Arm")
 
 List.files() was used to make the data frame with all of the file names, and map() and read_csv() were used to get the data for each subject. Str_replace() and str_sub() were then used to get the subject ID and arm from the file names, and pivot_longer() was used to tidy each of the weekly observations, so each row had one subject per week. As seen in the spaghetti plot, individuals in the control arm had relatively constant outcomes between -2.5 and ~4 over the 8-week time period. In the experimental arm, individuals increased from 0 to 3 in the first week to 3 to ~7 at the end of the 8 weeks. Therefore, the experimental arm had higher outcomes on average compared to the control arm.
 
+# Problem 3
+```{r}
+# Set up simulation to explore power in 1-sample t-test
+sim_ttest = function(mu, n = 30, sigma = 5) {
+sim_data = tibble(
+x = rnorm(n, mean = mu, sd = sigma)
+)
+sim_data |>
+pull(x) |>
+t.test(mu = 0) |>
+broom::tidy() |>
+select(estimate, p.value)
+}
+
+#Test function
+sim_ttest(0)
+sim_ttest(6)
+
+# Generate 5000 datasets for mu = {1,..,6}
+sim_results_df = expand_grid(
+true_mu = 0:6,
+iter = 1:5000) |>
+mutate(estimate_df = map(true_mu, sim_ttest)) |>
+unnest(estimate_df)
+head(sim_results_df)
+
+# Make a plot for the power of the test
+sim_results_df |>
+group_by(true_mu) |>
+summarize(power = mean(p.value < 0.05)) |>
+ggplot(aes(x = true_mu, y = power)) + geom_point() + geom_line() +
+labs(
+title = "Power of the one-sample t-test depending on mu",
+x = "True value of mu",
+y = "Proportion of times null was rejected (power)"
+)
+
+```
+
+Group_by() and summarize() were used in order to find the power of each value of mu. This was done by running 5,000 tests and looking at the proportion of tests where the null was rejected. This was done when the p-value was less than the alpha value of 0.05. As seen in the plot, as the true value of mu (which is the effect size) increases, the power increases.
+
+```{r}
+# Average estimate and true value of mu
+mu_df = sim_results_df |>
+group_by(true_mu) |>
+summarize(avg_mu = mean(estimate)) |>
+mutate(samples = "Average of all samples")
+
+# Average estimate of mu for samples with null rejected
+null_rejected_df = sim_results_df |>
+filter(p.value < 0.05) |>
+group_by(true_mu) |>
+summarize(avg_mu = mean(estimate)) |>
+mutate(samples = "Average of samples with null rejected")
+
+#Overlay plots 
+bind_rows(mu_df, null_rejected_df) |>
+ggplot(aes(x = true_mu, y = avg_mu, color = samples)) + geom_point() + geom_line() + labs(
+title = "Average estimate of mu v. true value of mu", 
+x = "True value of mu",
+y = "Average estimate of mu",
+color = "Samples"
+)
+```
+
+As seen in the plot above, the average estimate of mu in the samples where the null was rejected was fairly consistent with the average of all the samples where mu was 4 or larger. However, for values of mu that are below 4, the average of samples where the null was rejected was higher than the true value of mu, which is where we see the gap in the lines. This is because the power is low for these values of mu, and since the mu is small, the null is only rejected when a sample has a high estimate, leading to a larger average. When mu is larger, most samples rejected the null, leading to averages that are similar to each other. 
